@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment secrets
+.env
+.env.*
+
+# Keep the example configuration in Git
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
