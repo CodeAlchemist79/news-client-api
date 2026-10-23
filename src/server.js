@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
@@ -6,7 +7,7 @@ const pool = require('./database/connection');
 const categoryRoutes = require('./modules/categories/category.routes');
 const newsRoutes = require('./modules/news/news.routes');
 
-const init = async () => {
+const createServer = async () => {
   const server = Hapi.server({
     port: Number(process.env.PORT) || 3000,
     host: process.env.HOST || 'localhost',
@@ -28,7 +29,6 @@ const init = async () => {
     let statusCode = error.statusCode || error.output?.statusCode || 500;
     let message = error.message || 'An unexpected error occurred.';
 
-    // Log unexpected server errors for debugging.
     if (statusCode >= 500) {
       console.error('\n========== API SERVER ERROR ==========');
       console.error(
@@ -45,31 +45,26 @@ const init = async () => {
       message = 'An unexpected server error occurred.';
     }
 
-    // PostgreSQL unique constraint violation.
     if (error.code === '23505') {
       statusCode = 409;
       message = 'A record with this unique value already exists.';
     }
 
-    // PostgreSQL foreign key violation.
     if (error.code === '23503') {
       statusCode = 409;
       message = 'This operation conflicts with related records.';
     }
 
-    // PostgreSQL NOT NULL constraint violation.
     if (error.code === '23502') {
       statusCode = 400;
       message = 'A required database field is missing.';
     }
 
-    // PostgreSQL check constraint violation.
     if (error.code === '23514') {
       statusCode = 400;
       message = 'The supplied data violates a validation rule.';
     }
 
-    // Return validation details for errors produced by our route validation.
     const responseBody = {
       status: 'error',
       message,
@@ -101,18 +96,30 @@ const init = async () => {
   server.route(categoryRoutes);
   server.route(newsRoutes);
 
+  return server;
+};
+
+const start = async () => {
+  const server = await createServer();
+
   await server.start();
 
   console.log(`Server running at: ${server.info.uri}`);
   console.log('Health endpoint: /api/v1/health');
+
+  return server;
 };
+
+if (require.main === module) {
+  start().catch(async (error) => {
+    console.error('Failed to start server:', error.message);
+    await pool.end();
+    process.exit(1);
+  });
+}
 
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled error:', error);
 });
 
-init().catch(async (error) => {
-  console.error('Failed to start server:', error.message);
-  await pool.end();
-  process.exit(1);
-});
+module.exports = { createServer, start };
