@@ -50,6 +50,31 @@ describe('News & Updates API', () => {
     expect(response.result.status).to.equal('error');
   });
 
+  it('returns 400 for an invalid tag ID', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/api/v1/tags/abc',
+    });
+
+    expect(response.statusCode).to.equal(400);
+    expect(response.result.status).to.equal('error');
+  });
+
+  it('returns the tags collection successfully', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/api/v1/tags',
+    });
+
+    expect(response.statusCode).to.equal(200);
+    expect(response.result.status).to.equal('success');
+    expect(response.result.data).to.exist();
+    expect(response.result.data.tags).to.be.an.array();
+    expect(response.result.results).to.equal(
+      response.result.data.tags.length
+    );
+  });
+
   it('returns 200 when the health check succeeds', async () => {
     const response = await server.inject({
       method: 'GET',

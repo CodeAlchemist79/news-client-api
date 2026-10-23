@@ -1,4 +1,6 @@
 
+'use strict';
+
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
@@ -6,6 +8,7 @@ const pool = require('./database/connection');
 
 const categoryRoutes = require('./modules/categories/category.routes');
 const newsRoutes = require('./modules/news/news.routes');
+const tagRoutes = require('./modules/tags/tag.routes');
 
 const createServer = async () => {
   const server = Hapi.server({
@@ -26,8 +29,11 @@ const createServer = async () => {
       return h.continue;
     }
 
-    let statusCode = error.statusCode || error.output?.statusCode || 500;
-    let message = error.message || 'An unexpected error occurred.';
+    let statusCode =
+      error.statusCode || error.output?.statusCode || 500;
+
+    let message =
+      error.message || 'An unexpected error occurred.';
 
     if (statusCode >= 500) {
       console.error('\n========== API SERVER ERROR ==========');
@@ -74,7 +80,9 @@ const createServer = async () => {
       responseBody.details = error.details;
     }
 
-    return h.response(responseBody).code(statusCode).takeover();
+    return h.response(responseBody)
+      .code(statusCode)
+      .takeover();
   });
 
   // Health check.
@@ -95,6 +103,7 @@ const createServer = async () => {
   // Register API routes.
   server.route(categoryRoutes);
   server.route(newsRoutes);
+  server.route(tagRoutes);
 
   return server;
 };
@@ -106,6 +115,9 @@ const start = async () => {
 
   console.log(`Server running at: ${server.info.uri}`);
   console.log('Health endpoint: /api/v1/health');
+  console.log('Categories endpoint: /api/v1/categories');
+  console.log('News endpoint: /api/v1/news');
+  console.log('Tags endpoint: /api/v1/tags');
 
   return server;
 };
